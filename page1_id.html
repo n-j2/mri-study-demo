@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="demo-config.js"></script>
+  <title>Participant ID</title>
+  <link rel="stylesheet" href="styles.css">
+  
+
+  <script>
+    localStorage.removeItem("participant_id");
+    localStorage.removeItem("session");
+  </script>
+</head>
+<body>
+
+<div class="container">
+  <h2>Enter your Participant ID</h2>
+
+  <p>Please enter your participant ID - the researcher can help you with this </p>
+  <p>If you auditing this study as a reviewer, you may still continue by entering any matching number.</p>
+
+  <input id="id1" placeholder="Enter ID"><br><br>
+  <input id="id2" placeholder="Re-enter ID"><br><br>
+
+  <p id="error"></p>
+
+  <button onclick="continueNext()">Continue</button>
+</div>
+
+<script>
+async function continueNext() {
+  const rawId1 = document.getElementById("id1").value;
+  const rawId2 = document.getElementById("id2").value;
+
+  const id1 = rawId1.trim();
+  const id2 = rawId2.trim();
+
+  document.getElementById("error").innerText = "";
+
+  if (id1 === "" || id2 === "") {
+    document.getElementById("error").innerText = "Please fill in both fields.";
+    return;
+  }
+
+  if (id1 !== id2) {
+    document.getElementById("error").innerText = "The participant IDs do not match.";
+    return;
+  }
+
+  let session = JSON.parse(localStorage.getItem("session")) || {};
+
+  if (!session.session_uuid) {
+    session.session_uuid = crypto.randomUUID();
+  }
+
+  session.participant_id = id1;
+  session.study_status = "id_entered";
+  session.id_entered_at = new Date().toISOString();
+
+  localStorage.setItem("participant_id", id1);
+  localStorage.setItem("session", JSON.stringify(session));
+
+    try {
+      if (!DEMO_MODE) {
+        await fetch("/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(session)
+        });
+      } else {
+        console.log("Demo mode: participant ID step not saved.");
+      }
+    } catch (error) {
+      console.error("Failed to save participant ID step:", error);
+    }
+
+  window.location.href = "page2_consent.html";
+}
+</script>
+
+</body>
+</html>

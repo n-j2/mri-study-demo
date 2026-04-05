@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="demo-config.js"></script>
+  <title>Post-game Questions</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+
+<h1>Final Questions</h1>
+
+<p>Please answer the following questions. You may leave any question blank if you prefer.</p>
+
+<label for="mri_anxiety_post">
+  How anxious would you be about taking part in an MRI research study? (0 = not anxious at all, 10 = extremely anxious)
+</label><br>
+<input id="mri_anxiety_post" type="number" min="0" max="10" step="1"><br><br>
+
+<label for="mri_willingness_post">
+  How willing would you be to take part in an MRI research study? (0 = not willing at all, 10 = extremely willing)
+</label><br>
+<input id="mri_willingness_post" type="number" min="0" max="10" step="1"><br><br>
+
+<h2>Acceptability of Intervention Measure (AIM)</h2>
+<p>Please select how much you agree with each statement.</p>
+
+<label for="aim_1">The game meets my approval</label><br>
+<select id="aim_1">
+  <option value="">-- Select --</option>
+  <option value="completely_disagree">Completely disagree</option>
+  <option value="disagree">Disagree</option>
+  <option value="neither_agree_nor_disagree">Neither agree nor disagree</option>
+  <option value="agree">Agree</option>
+  <option value="completely_agree">Completely agree</option>
+</select><br><br>
+
+<label for="aim_2">The game is appealing to me</label><br>
+<select id="aim_2">
+  <option value="">-- Select --</option>
+  <option value="completely_disagree">Completely disagree</option>
+  <option value="disagree">Disagree</option>
+  <option value="neither_agree_nor_disagree">Neither agree nor disagree</option>
+  <option value="agree">Agree</option>
+  <option value="completely_agree">Completely agree</option>
+</select><br><br>
+
+<label for="aim_3">I like the game</label><br>
+<select id="aim_3">
+  <option value="">-- Select --</option>
+  <option value="completely_disagree">Completely disagree</option>
+  <option value="disagree">Disagree</option>
+  <option value="neither_agree_nor_disagree">Neither agree nor disagree</option>
+  <option value="agree">Agree</option>
+  <option value="completely_agree">Completely agree</option>
+</select><br><br>
+
+<label for="aim_4">I welcome the game</label><br>
+<select id="aim_4">
+  <option value="">-- Select --</option>
+  <option value="completely_disagree">Completely disagree</option>
+  <option value="disagree">Disagree</option>
+  <option value="neither_agree_nor_disagree">Neither agree nor disagree</option>
+  <option value="agree">Agree</option>
+  <option value="completely_agree">Completely agree</option>
+</select><br><br>
+
+<label for="technical_issues">
+  Did you experience any technical problems whilst playing the game?
+</label><br>
+<select id="technical_issues" onchange="toggleTechnicalIssuesText()">
+  <option value="">-- Select --</option>
+  <option value="no">No</option>
+  <option value="minor_problems">Yes, minor problems</option>
+  <option value="major_problems">Yes, major problems</option>
+</select><br><br>
+
+<div id="technicalIssuesTextContainer" style="display:none;">
+  <label for="technical_issues_text">
+    If yes, please briefly describe the issue.
+  </label><br>
+  <textarea id="technical_issues_text" rows="4" cols="60"></textarea><br><br>
+</div>
+
+<label for="most_useful_learning">
+  What was the most useful, memorable, or surprising thing you learned from the game?
+</label><br>
+<textarea id="most_useful_learning" rows="5" cols="70"></textarea><br><br>
+
+<label for="improvements">
+  Was there anything you disliked, found confusing, or think could be improved about the game?
+</label><br>
+<textarea id="improvements" rows="5" cols="70"></textarea><br><br>
+
+<p id="error" style="color:red; min-height: 1.5em; margin-bottom: 16px;"></p>
+
+<button onclick="continueNext()">Continue</button>
+
+</div>
+
+<script>
+function toggleTechnicalIssuesText() {
+  const technicalIssuesValue = document.getElementById("technical_issues").value;
+  const container = document.getElementById("technicalIssuesTextContainer");
+
+  if (technicalIssuesValue === "minor_problems" || technicalIssuesValue === "major_problems") {
+    container.style.display = "block";
+  } else {
+    container.style.display = "none";
+  }
+}
+
+async function continueNext() {
+  const anxietyValue = document.getElementById("mri_anxiety_post").value.trim();
+  const willingnessValue = document.getElementById("mri_willingness_post").value.trim();
+
+  const aim1 = document.getElementById("aim_1").value;
+  const aim2 = document.getElementById("aim_2").value;
+  const aim3 = document.getElementById("aim_3").value;
+  const aim4 = document.getElementById("aim_4").value;
+
+  const technicalIssuesValue = document.getElementById("technical_issues").value;
+  const technicalIssuesText = document.getElementById("technical_issues_text").value.trim();
+  const mostUsefulLearning = document.getElementById("most_useful_learning").value.trim();
+  const improvements = document.getElementById("improvements").value.trim();
+
+  document.getElementById("error").textContent = "";
+
+  if (anxietyValue !== "") {
+    const anxietyNum = Number(anxietyValue);
+    if (!Number.isInteger(anxietyNum) || anxietyNum < 0 || anxietyNum > 10) {
+      document.getElementById("error").textContent =
+        "Anxiety rating must be a whole number from 0 to 10.";
+      return;
+    }
+  }
+
+  if (willingnessValue !== "") {
+    const willingnessNum = Number(willingnessValue);
+    if (!Number.isInteger(willingnessNum) || willingnessNum < 0 || willingnessNum > 10) {
+      document.getElementById("error").textContent =
+        "Willingness rating must be a whole number from 0 to 10.";
+      return;
+    }
+  }
+
+  let session = JSON.parse(localStorage.getItem("session")) || {};
+
+  if (!session.session_uuid) {
+    session.session_uuid = crypto.randomUUID();
+  }
+
+  session.participant_id = localStorage.getItem("participant_id");
+  session.study_status = "finished";
+
+  session.post_questionnaire = {
+    mri_anxiety_post: anxietyValue === "" ? null : Number(anxietyValue),
+    mri_willingness_post: willingnessValue === "" ? null : Number(willingnessValue),
+    aim: {
+      aim_1: aim1 === "" ? null : aim1,
+      aim_2: aim2 === "" ? null : aim2,
+      aim_3: aim3 === "" ? null : aim3,
+      aim_4: aim4 === "" ? null : aim4
+    },
+    technical_issues: technicalIssuesValue === "" ? null : technicalIssuesValue,
+    technical_issues_text: technicalIssuesText === "" ? null : technicalIssuesText,
+    most_useful_learning: mostUsefulLearning === "" ? null : mostUsefulLearning,
+    improvements: improvements === "" ? null : improvements,
+    completed_at: new Date().toISOString()
+  };
+
+  localStorage.setItem("session", JSON.stringify(session));
+
+    try {
+      if (!DEMO_MODE) {
+        await fetch("/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(session)
+        });
+      } else {
+        console.log("Demo mode: post_quest_inc_AIM step not saved.");
+      }
+    } catch (error) {
+      console.error("Failed to save post_quest_inc_AIM step:", error);
+    }
+  window.location.href = "page8_thankyou.html";
+}
+</script>
+
+</body>
+</html>

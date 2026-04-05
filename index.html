@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Study Entry</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="demo-config.js"></script>
+</head>
+
+<body>
+
+<div class="container" id="mainContent" style="text-align:center; display:none;">
+
+  <h1>Welcome</h1>
+
+  <div id="demoNotice" style="display:none; text-align:left;">
+    <p><strong>This is a demonstration version of the study.</strong></p>
+
+    <p>
+      This version is hosted online for review by supervisors, journal reviewers, and ethics committees.
+      It is not the version that will be used with study participants.
+    </p>
+
+    <p>
+      In this demonstration version, no data you enter will be transmitted to or stored by the research team.
+      However, any information entered may be temporarily stored by your browser
+      (e.g. using local storage), depending on your device and browser settings.
+    </p>
+
+    <p>
+      You may enter dummy or placeholder responses, or leave questions blank if you prefer.
+      However, some fields (e.g. participant ID, consent confirmation, restriction of age if provided) are required to proceed,
+      as they reflect intrinsic safety design features built into the flow.
+    </p>
+
+    <p>
+      Gameplay-related information may be generated and displayed locally within your browser,
+      but it will not be sent to or retained by the research team in this demonstration version.
+    </p>
+
+    <p>
+      The actual participant study will be conducted using a secure offline device,
+      with data stored securely in accordance with institutional and data protection guidelines.
+    </p>
+
+    <p>
+      Please do not share this link to anyone outside your review team without permission from the lead researcher.
+    </p>
+
+    <p>
+      By continuing, you confirm that you understand this is a demonstration version
+      and that you are accessing it for review purposes only.
+    </p>
+
+    <div style="text-align:center; margin-top: 30px;">
+      <button onclick="goToStudy()">I have read, understood and agree to the above</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function goToStudy() {
+  window.location.href = "page1_id.html";
+}
+
+// Logic on page load
+window.onload = function () {
+  const main = document.getElementById("mainContent");
+  const demoBox = document.getElementById("demoNotice");
+
+  if (typeof DEMO_MODE === "undefined") {
+    console.error("DEMO_MODE not loaded");
+    // fallback: just continue
+    window.location.href = "page1_id.html";
+    return;
+  }
+
+  if (DEMO_MODE) {
+    // Show demo page
+    main.style.display = "block";
+    demoBox.style.display = "block";
+  } else {
+    // Real study → skip page instantly
+    window.location.href = "page1_id.html";
+  }
+};
+</script>
+
+</body>
+</html>
