@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="demo-config.js"></script>
+  <title>Game</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .game-page-container {
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    h1, h2 {
+      text-align: center;
+    }
+
+    .instruction {
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    .game-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 25px;
+    }
+
+    .game-box {
+      background: #111;
+      padding: 12px;
+      border-radius: 12px;
+      border: 2px solid #d0d7de;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    iframe {
+      border: none;
+      width: 960px;
+      height: 540px;
+      max-width: 100%;
+      background: #000;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 25px;
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 15px;
+      color: #444;
+      min-height: 1.5em;
+    }
+
+    ul {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container game-page-container">
+
+  <h1>Please play the Educational Game</h1>
+
+  <p class="instruction">
+  Controls will be displayed in the top right of the game screen once you start.<br>
+  You may press the <strong>Escape key</strong> to quit playing at any time.
+  </p>
+
+  <div class="game-wrapper">
+    <div class="game-box">
+      <iframe
+        id="gameFrame"
+        src="game/index.html">
+      </iframe>
+    </div>
+  </div>
+
+  <div class="button-row">
+    <button id="nextBtn" onclick="goNext()" disabled>Continue</button>
+  </div>
+
+  <p id="statusText" class="status">
+    Please press the Escape key to finish the game and continue.
+  </p>
+
+<h2>Credits</h2>
+
+<p><strong>Godot Game Engine:</strong><br>
+Copyright (c) 2014–present Godot Engine contributors<br>
+Copyright (c) 2007–2014 Juan Linietsky, Ariel Manzur</p>
+
+<p><strong>Licensed under:</strong><br>
+<a href="https://godotengine.org/license" target="_blank">
+  https://godotengine.org/license
+</a></p>
+
+<p><strong>Player Character Sprite:</strong><br>
+Modified and adapted from TobalCR<br>
+<a href="https://www.deviantart.com/tobalcr" target="_blank">
+  https://www.deviantart.com/tobalcr
+</a></p>
+
+<p><strong>Outdoor Tiles:</strong><br>
+Magiscarf (with additional original elements)<br>
+<a href="https://www.deviantart.com/magiscarf" target="_blank">
+  https://www.deviantart.com/magiscarf
+</a></p>
+
+<p><strong>Licensed under:</strong><br>
+<a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank">
+  https://creativecommons.org/licenses/by-nc-sa/3.0/
+</a></p>
+
+<p><strong>Background Music:</strong><br>
+“Ambient” by Nastelbom (Pixabay)<br>
+<a href="https://pixabay.com/users/nastelbom-48128234/" target="_blank">
+  https://pixabay.com/users/nastelbom-48128234/
+</a></p>
+
+<p><strong>Interaction Sound:</strong><br>
+“New Notification” by Universfield (Pixabay)<br>
+<a href="https://pixabay.com/users/universfield-28281460/" target="_blank">
+  https://pixabay.com/users/universfield-28281460/
+</a></p>
+
+<p><strong>Licensed under:</strong><br>
+<a href="https://pixabay.com/service/license-summary/" target="_blank">
+  https://pixabay.com/service/license-summary/
+</a></p>
+
+<h2>References for in-game NPC dialogue</h2>
+
+<ul>
+  <li>
+    Chen, Y.C., Chen, C., Martinez, R.M., Etnier, J.L. and Cheng, Y., 2019.
+    Habitual physical activity mediates the acute exercise-induced modulation
+    of anxiety-related amygdala functional connectivity.
+    <em>Scientific Reports</em>, 9(1), p.19787.
+  </li>
+
+  <li>
+    Kini, P., Wong, J., McInnis, S., Gabana, N. and Brown, J.W., 2016.
+    The effects of gratitude expression on neural activity.
+    <em>NeuroImage</em>, 128, pp.1–10.
+  </li>
+
+  <li>
+    Taren, A.A., Gianaros, P.J., Greco, C.M., Lindsay, E.K., Fairgrieve, A.,
+    Brown, K.W., Rosen, R.K., Ferris, J.L., Julson, E., Marsland, A.L. and
+    Bursley, J.K., 2015.
+    Mindfulness meditation training alters stress-related amygdala resting
+    state functional connectivity: a randomized controlled trial.
+    <em>Social Cognitive and Affective Neuroscience</em>, 10(12), pp.1758–1768.
+  </li>
+</ul>
+
+<script>
+let session = JSON.parse(localStorage.getItem("session")) || {};
+let telemetryReceived = false;
+let pageLeavingSaveDone = false;
+
+// Mark that gameplay page has started
+if (!session.game) {
+  session.game = {};
+}
+
+if (!session.game.page_opened_at) {
+  session.game.page_opened_at = new Date().toISOString();
+}
+
+session.participant_id = localStorage.getItem("participant_id");
+session.study_status = "game_started";
+
+localStorage.setItem("session", JSON.stringify(session));
+
+// Save immediately on page load so we know they reached the game
+if (!DEMO_MODE) {
+  fetch("/save", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(session)
+  }).catch(error => {
+    console.error("Initial game page save failed:", error);
+  });
+} else {
+  console.log("Demo mode: game start not saved.");
+}
+
+window.addEventListener("message", async (event) => {
+  const gameFrame = document.getElementById("gameFrame");
+
+  if (event.source !== gameFrame.contentWindow) return;
+  if (!event.data || event.data.type !== "godotTelemetry") return;
+  if (telemetryReceived) return;
+
+  telemetryReceived = true;
+
+  console.log("Telemetry received:", event.data.payload);
+
+  let currentSession = JSON.parse(localStorage.getItem("session")) || {};
+
+  currentSession.participant_id = localStorage.getItem("participant_id");
+  currentSession.study_status = "game_complete";
+  currentSession.game = {
+    ...(currentSession.game || {}),
+    finished_at: new Date().toISOString(),
+    telemetry: event.data.payload,
+    interrupted: false
+  };
+
+  localStorage.setItem("session", JSON.stringify(currentSession));
+
+  try {
+    if (!DEMO_MODE) {
+      await fetch("/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(currentSession)
+      });
+    } else {
+      console.log("Demo mode: gameplay telemetry not saved.");
+    }
+  } catch (error) {
+    console.error("Failed to save gameplay telemetry:", error);
+  }
+
+  document.getElementById("nextBtn").disabled = false;
+  document.getElementById("statusText").innerText =
+    "Gameplay data recorded. You can now continue.";
+});
+
+async function saveInterruptedGameState() {
+  if (pageLeavingSaveDone) return;
+  pageLeavingSaveDone = true;
+
+  if (telemetryReceived) return;
+
+  let currentSession = JSON.parse(localStorage.getItem("session")) || {};
+
+  currentSession.participant_id = localStorage.getItem("participant_id");
+  currentSession.study_status = "game_abandoned_or_interrupted";
+  currentSession.game = {
+    ...(currentSession.game || {}),
+    interrupted: true,
+    interrupted_at: new Date().toISOString(),
+    telemetry: currentSession.game?.telemetry || null
+  };
+
+  localStorage.setItem("session", JSON.stringify(currentSession));
+
+  try {
+    if (!DEMO_MODE) {
+      await fetch("/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(currentSession),
+        keepalive: true
+      });
+    } else {
+      console.log("Demo mode: interrupted game state not saved.");
+    }
+  } catch (error) {
+    console.error("Failed to save interrupted game state:", error);
+  }
+}
+
+function goNext() {
+  window.location.href = "page6_postmcq.html";
+}
+
+// Best-effort save when user leaves page or closes tab
+window.addEventListener("pagehide", () => {
+  saveInterruptedGameState();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    saveInterruptedGameState();
+  }
+});
+</script>
+
+</body>
+</html>

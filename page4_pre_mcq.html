@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="demo-config.js"></script>
+  <title>Pre-game MRI and Research Knowledge Questions</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+
+<h1>Questions about MRI and Research</h1>
+
+<p>Please answer the following multiple choice questions.</p>
+
+<p>Do not worry if you do not know the answers - these questions are designed to be hard.</p>
+
+<p>You may take as long as you like.</p>
+
+<p>Please answer as best you can by yourself without looking up the answers or asking for help.</p>
+
+<p>If you are not sure, please just take your best guess. You may also leave any question blank if you prefer.</p>
+
+<div id="questionsContainer"></div>
+
+<p id="error" style="color:red; min-height: 1.5em; margin-bottom: 16px;"></p>
+
+<button onclick="continueNext()">Continue</button>
+
+</div>
+
+<script>
+const PRE_MCQS = [
+  {
+    id: "q1",
+    question: "What is the main physics principle used by an MRI scanner?",
+    options: [
+      { id: "a", text: "A very strong magnetic field that is always on", correct: true },
+      { id: "b", text: "Low-dose ionising radiation that is switched on during scans", correct: false },
+      { id: "c", text: "High-frequency sound waves that bounce off brain tissue", correct: false },
+      { id: "d", text: "Low-voltage electrical currents passed directly through the brain", correct: false }
+    ]
+  },
+  {
+    id: "q2",
+    question: "How is contrast typically given in MRI studies when it is used?",
+    options: [
+      { id: "a", text: "Through a small tube placed in the hand or arm", correct: true },
+      { id: "b", text: "As a gas that is breathed in through a mask", correct: false },
+      { id: "c", text: "As a tablet taken orally before the scan", correct: false },
+      { id: "d", text: "Through electrodes attached to the scalp", correct: false }
+    ]
+  },
+  {
+    id: "q3",
+    question: "Why do studies with more participants generally produce more reliable results?",
+    options: [
+      { id: "a", text: "They reduce the chance that findings are due to random variation", correct: true },
+      { id: "b", text: "They allow each participant to be scanned multiple times", correct: false },
+      { id: "c", text: "They eliminate all measurement errors in MRI scanning", correct: false },
+      { id: "d", text: "They help ensure all participants have similar brain structure", correct: false }
+    ]
+  },
+  {
+    id: "q4",
+    question: "What is the purpose of “registration” in brain imaging analysis?",
+    options: [
+      { id: "a", text: "To align brain scans so the same regions can be compared across people", correct: true },
+      { id: "b", text: "To record participants’ personal details before scanning", correct: false },
+      { id: "c", text: "To increase the strength of the MRI signal", correct: false },
+      { id: "d", text: "To remove noise by averaging multiple scans together", correct: false }
+    ]
+  },
+  {
+    id: "q5",
+    question: "What does it mean if a research study is “peer-reviewed”?",
+    options: [
+      { id: "a", text: "It has been checked and evaluated by other experts in the field", correct: true },
+      { id: "b", text: "It has been approved by participants who took part in the study", correct: false },
+      { id: "c", text: "It has been shared widely on social media platforms", correct: false },
+      { id: "d", text: "It has been automatically analysed by computer algorithms", correct: false }
+    ]
+  },
+  {
+    id: "q6",
+    question: "What is a systematic review?",
+    options: [
+      { id: "a", text: "A method that combines results from multiple studies to assess consistency of findings", correct: true },
+      { id: "b", text: "A study that follows the same participants over many years", correct: false },
+      { id: "c", text: "A review written by a single expert based on personal experience", correct: false },
+      { id: "d", text: "A method that repeats one experiment many times in the same group", correct: false }
+    ]
+  },
+  {
+    id: "q7",
+    question: "What does “translational research” mean?",
+    options: [
+      { id: "a", text: "Turning scientific discoveries into treatments that can be used in patients", correct: true },
+      { id: "b", text: "Translating research papers into different spoken languages", correct: false },
+      { id: "c", text: "Converting MRI images into written clinical reports", correct: false },
+      { id: "d", text: "Applying research findings within other laboratory settings", correct: false }
+    ]
+  }
+];
+
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function getSession() {
+  return JSON.parse(localStorage.getItem("session")) || {};
+}
+
+function saveSession(session) {
+  localStorage.setItem("session", JSON.stringify(session));
+}
+
+function buildPreMcqDisplay() {
+  let session = getSession();
+
+  if (!session.pre_mcq) {
+    session.pre_mcq = {};
+  }
+
+  if (!session.pre_mcq.display_order) {
+    const shuffledQuestions = shuffleArray(PRE_MCQS).map(q => {
+      const shuffledOptionIds = shuffleArray(q.options.map(opt => opt.id));
+      return {
+        question_id: q.id,
+        option_order: shuffledOptionIds
+      };
+    });
+
+    session.pre_mcq.display_order = shuffledQuestions;
+    saveSession(session);
+  }
+
+  const container = document.getElementById("questionsContainer");
+  container.innerHTML = "";
+
+  session.pre_mcq.display_order.forEach((qDisplay, index) => {
+    const fullQuestion = PRE_MCQS.find(q => q.id === qDisplay.question_id);
+
+    const block = document.createElement("div");
+    block.style.marginBottom = "30px";
+
+    const title = document.createElement("p");
+    title.innerHTML = `<strong>Question ${index + 1}</strong><br>${fullQuestion.question}`;
+    block.appendChild(title);
+
+    qDisplay.option_order.forEach(optionId => {
+      const opt = fullQuestion.options.find(o => o.id === optionId);
+
+      const label = document.createElement("label");
+      label.style.display = "block";
+      label.style.marginBottom = "8px";
+
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = fullQuestion.id;
+      radio.value = opt.id;
+
+      const currentSession = getSession();
+      const existingAnswer = currentSession.pre_mcq?.answers?.[fullQuestion.id]?.selected_option_id;
+      if (existingAnswer === opt.id) {
+        radio.checked = true;
+      }
+
+      label.appendChild(radio);
+      label.appendChild(document.createTextNode(" " + opt.text));
+      block.appendChild(label);
+    });
+
+    container.appendChild(block);
+    container.appendChild(document.createElement("hr"));
+  });
+}
+
+async function continueNext() {
+  let session = getSession();
+
+  if (!session.pre_mcq) {
+    session.pre_mcq = {};
+  }
+
+  const answers = {};
+  let totalCorrect = 0;
+
+  PRE_MCQS.forEach(q => {
+    const selected = document.querySelector(`input[name="${q.id}"]:checked`);
+
+    if (!selected) {
+      answers[q.id] = {
+        answered: false,
+        selected_option_id: null,
+        correct: null
+      };
+      return;
+    }
+
+    const selectedOptionId = selected.value;
+    const selectedOption = q.options.find(opt => opt.id === selectedOptionId);
+    const isCorrect = selectedOption ? selectedOption.correct : false;
+
+    if (isCorrect) {
+      totalCorrect += 1;
+    }
+
+    answers[q.id] = {
+      answered: true,
+      selected_option_id: selectedOptionId,
+      correct: isCorrect
+    };
+  });
+
+  session.participant_id = localStorage.getItem("participant_id");
+  session.study_status = "pre_mcq_complete";
+
+  session.pre_mcq = {
+    ...(session.pre_mcq || {}),
+    answers: answers,
+    total_correct: totalCorrect,
+    completed_at: new Date().toISOString()
+  };
+
+  saveSession(session);
+
+    try {
+      if (!DEMO_MODE) {
+        await fetch("/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(session)
+        });
+      } else {
+        console.log("Demo mode: pre-mcq step not saved.");
+      }
+    } catch (error) {
+      console.error("Failed to save pre-mcq ID step:", error);
+    }
+
+  window.location.href = "page5_game.html";
+}
+
+buildPreMcqDisplay();
+</script>
+
+</body>
+</html>

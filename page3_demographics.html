@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="demo-config.js"></script>
+  <title>Demographics</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+
+<h1>About You</h1>
+
+<p>Please answer the following questions. You may leave any question blank if you prefer.</p>
+
+<label for="age">Age (in years)</label><br>
+<input id="age" type="number" min="0" step="1"><br><br>
+
+<label for="sex">Sex</label><br>
+<select id="sex">
+  <option value="">-- Select --</option>
+  <option value="male">Male</option>
+  <option value="female">Female</option>
+  <option value="intersex_or_other">Intersex / other</option>
+  <option value="prefer_not_to_say">Do not wish to say</option>
+</select><br><br>
+
+<label for="gaming_frequency">
+  How often do you usually play video games of any kind (including mobile, console, PC, handheld, or online games)?
+</label><br>
+<select id="gaming_frequency">
+  <option value="">-- Select --</option>
+  <option value="never_or_almost_never">Never or almost never</option>
+  <option value="less_than_once_a_week">Less than once a week</option>
+  <option value="1_to_3_days_per_week">1–3 days per week</option>
+  <option value="4_or_more_days_per_week">4 or more days per week</option>
+</select><br><br>
+
+<label for="mri_anxiety_pre">
+  How anxious would you be about taking part in an MRI research study? (0 = not anxious at all, 10 = extremely anxious)
+</label><br>
+<input id="mri_anxiety_pre" type="number" min="0" max="10" step="1"><br><br>
+
+<label for="mri_willingness_pre">
+  How willing would you be to take part in an MRI research study? (0 = not willing at all, 10 = extremely willing)
+</label><br>
+<input id="mri_willingness_pre" type="number" min="0" max="10" step="1"><br><br>
+
+<p id="error" style="color:red; min-height: 1.5em; margin-bottom: 16px;"></p>
+
+<button onclick="continueNext()">Continue</button>
+
+</div>
+
+<script>
+async function continueNext() {
+  const ageValue = document.getElementById("age").value.trim();
+  const sexValue = document.getElementById("sex").value;
+  const gamingFrequencyValue = document.getElementById("gaming_frequency").value;
+  const anxietyValue = document.getElementById("mri_anxiety_pre").value.trim();
+  const willingnessValue = document.getElementById("mri_willingness_pre").value.trim();
+
+  document.getElementById("error").innerText = "";
+
+  if (ageValue !== "") {
+    const ageNum = Number(ageValue);
+
+    if (!Number.isInteger(ageNum)) {
+      document.getElementById("error").innerText =
+        "Age must be entered as a whole number in years.";
+      return;
+    }
+
+    if (ageNum < 18 || ageNum > 35) {
+      document.getElementById("error").innerText =
+        "This study is only open to participants aged 18 to 35 years. Please speak to the researcher if you think this is an error.";
+      return;
+    }
+  }
+
+  if (anxietyValue !== "") {
+    const anxietyNum = Number(anxietyValue);
+    if (!Number.isInteger(anxietyNum) || anxietyNum < 0 || anxietyNum > 10) {
+      document.getElementById("error").innerText =
+        "Anxiety rating must be a whole number from 0 to 10.";
+      return;
+    }
+  }
+
+  if (willingnessValue !== "") {
+    const willingnessNum = Number(willingnessValue);
+    if (!Number.isInteger(willingnessNum) || willingnessNum < 0 || willingnessNum > 10) {
+      document.getElementById("error").innerText =
+        "Willingness rating must be a whole number from 0 to 10.";
+      return;
+    }
+  }
+
+  let session = JSON.parse(localStorage.getItem("session")) || {};
+
+  if (!session.session_uuid) {
+    session.session_uuid = crypto.randomUUID();
+  }
+
+  session.participant_id = localStorage.getItem("participant_id");
+  session.study_status = "demographics_complete";
+
+  session.demographics = {
+    age_years: ageValue === "" ? null : Number(ageValue),
+    sex: sexValue === "" ? null : sexValue,
+    gaming_frequency: gamingFrequencyValue === "" ? null : gamingFrequencyValue
+  };
+
+  session.pre_game = {
+    ...(session.pre_game || {}),
+    mri_anxiety_pre: anxietyValue === "" ? null : Number(anxietyValue),
+    mri_willingness_pre: willingnessValue === "" ? null : Number(willingnessValue)
+  };
+
+  session.demographics_completed_at = new Date().toISOString();
+
+  localStorage.setItem("session", JSON.stringify(session));
+
+    try {
+      if (!DEMO_MODE) {
+        await fetch("/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(session)
+        });
+      } else {
+        console.log("Demo mode: demographics step not saved.");
+      }
+    } catch (error) {
+      console.error("Failed to save demographics step:", error);
+    }
+
+  window.location.href = "page4_pre_mcq.html";
+}
+</script>
+
+</body>
+</html>
